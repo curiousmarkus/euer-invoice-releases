@@ -1,0 +1,46 @@
+PROPRIETARY SOFTWARE LICENSE — EUER-INVOICE
+
+Copyright (c) 2026 Markus. All rights reserved in the original euer-invoice code.
+
+1. Scope
+This license applies to the original euer-invoice software and documentation.
+Third-party software, fonts, schemas and validation rules are excluded and remain
+under their respective licenses. See THIRD_PARTY_NOTICES.md and the legal/
+directory distributed with the Java toolchain. Where terms conflict for a
+third-party component, that component's own license takes precedence. Nothing
+in this license restricts rights to use, copy, modify, redistribute or obtain
+source code granted by a third-party license or mandatory applicable law.
+
+2. Permitted use
+You may install and use lawfully obtained, unmodified releases. The free features
+and the monthly invoice-issuance allowance supplied with the release may be used
+without purchasing a key. Use beyond that allowance requires a valid invoice or
+combined product license covering the invoice's year. A paid key grants the
+corresponding usage rights; it does not transfer copyright or ownership.
+
+You may make installation and backup copies. Unmodified official release packages
+may be redistributed with this license and all third-party notices intact. This
+permission allows distribution through PyPI, package mirrors and the Homebrew tap.
+It does not permit redistribution of another person's commercial license keys.
+
+3. Reserved rights
+Except for the permissions above or a separate agreement with the copyright
+holder, no permission is granted to modify, relicense or distribute modified
+versions of the original proprietary euer-invoice code, or to bypass its license
+enforcement. These restrictions do not apply to the excluded third-party
+components or limit non-waivable statutory rights.
+
+4. Third-party source code
+The legal/ directory of the toolchain identifies third-party components and
+provides the corresponding licensed sources and notices where required.
+Third-party source code remains under the licenses stated there. No additional
+fee or commercial euer-invoice key is required to exercise those rights.
+
+5. Warranty and liability
+To the extent permitted by applicable law, the software is provided "AS IS"
+without warranties of merchantability, fitness for a particular purpose or
+non-infringement. To the extent permitted by applicable law, the copyright holder
+is not liable for losses arising from its use. Mandatory legal rights and
+liabilities remain unaffected. Third-party authors provide their components under
+their own disclaimers; any separate support agreement is offered by its provider
+alone.
