@@ -2,11 +2,12 @@
   "format_version": 1,
   "version": "0.4.1",
   "files": {
-    "LICENSE": "141f2154128d4ece3406ff9934a7302724dc20507b00623c546ecc459737b58d",
-    "README.md": "7fafae56dd3dd4bf0f956560811bdbd2439e226c63fde2a6844dcc3b0533b003",
+    "LICENSE": "ff3d22f9549b7a97031ba71fe85bb55905a8a2bbc492e0f179756e4f32a88a37",
+    "README.md": "27cc7e8975eb6338817fca55e7b89769b68c0d99247a266545fab96a5c950326",
     "THIRD_PARTY_NOTICES.md": "bca93434833045ebdcc9f71a6a7bf6b3116d8d64a548c4d8d3398da4d8f562f0",
-    "docs/skills/euer-invoice/SKILL.md": "6d4145520bbff6aad33fe78fce0ff53571daa199c206f28882768cfed7f095de",
-    "docs/skills/euer-invoice/references/installation_and_setup.md": "06f1d3c883a44e239f61ba0628fe42fd104f9f452642fca125bb4c6dc40a9f54",
-    "docs/skills/euer-invoice/references/operations.md": "ffa94878cc1f429a7e24a787ef5f8e75027aee23b02e8d0757c90d12b89881aa"
+    "docs/skills/euer-invoice/SKILL.md": "2ec4f5c0c547a1b08c204f9d7db2e3335a7a42e424012ac794e73e9865bbd559",
+    "docs/skills/euer-invoice/references/delivery.md": "381e1f8f885f73eb6030f69d84c109f741a343051e48ef076f9ae8c91409bf92",
+    "docs/skills/euer-invoice/references/installation_and_setup.md": "1778352c01326704cbbf8432bf2e3c21a286d1167fa45c1384daec20e13e9443",
+    "docs/skills/euer-invoice/references/operations.md": "f602a503a3d0756b3ffb939f90d8bda3ecc27dbc0e98dd684cec153dc2111c61"
   }
 }

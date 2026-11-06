@@ -1,72 +1,133 @@
 # Installation, Einrichtung und Skill-Updates
 
-Diese Referenz beschreibt die Installation der CLI, die Bereitstellung der Java- und
-KoSIT-Toolchain, das Aussteller-Onboarding (`seller set`), die Wahl des Freigabemodus,
-die Lizenzaktivierung sowie den vollständigen Austausch des Skills bei Updates.
+Installiere CLI, Toolchain und Skill nach den folgenden Schritten und richte das
+Ausstellerprofil ein. Belasse bei Skill-Updates Dateien außerhalb des Skill-Ordners
+unverändert, insbesondere `AGENTS.md`, Mandantendossiers und Rechnungsdatenbanken.
 Export, Sicherung und Prüfgrenzen stehen in der [Betriebsreferenz](operations.md).
 
-Die CLI selbst installiert keine Agentendateien. Dateien außerhalb des Skill-Ordners
-(wie `AGENTS.md`, Mandantendossiers, `invoice.db` oder die `buchhaltung.db` von `euer`)
-bleiben bei Skill- und CLI-Updates unberührt.
+## Start ohne bestehende Installation
+
+Arbeite im Rechnungsordner des Nutzers und verwende vorhandene Datenbankpfade.
+
+1. Prüfe Betriebssystem, vorhandenen Paketmanager, Python (mindestens 3.11), Java
+   (mindestens 21) und eine gegebenenfalls vorhandene `euer-invoice`-Installation.
+2. Installiere bei fehlender CLI zunächst das Paket nach Abschnitt 2, dann Java und
+   Toolchain nach Abschnitt 3. macOS und Linux können Homebrew verwenden; Windows
+   nutzt den nativen Python-/pipx-Weg unten. Installiere nur fehlende Voraussetzungen.
+3. Ermittle anschließend mit `doctor` das Skill-Bundle, installiere den vollständigen
+   Skill nach Abschnitt 1 und lies dessen `SKILL.md` vor der Versionsbestätigung.
+4. Richte das Ausstellerprofil nach Abschnitt 4 aus bekannten Angaben ein und frage
+   fehlende Fakten nach. Bereite auf Wunsch einen Entwurf zur Prüfung vor; die
+   Ausstellung erfolgt erst nach ausdrücklicher Nutzerfreigabe.
+
+Schließe die Einrichtung ab, wenn `doctor` die Toolchain als verfügbar und
+`skill.status` als `current` meldet und das Ausstellerprofil eingerichtet ist.
+Falls eine Systemfreigabe oder ein Sitzungsneustart erforderlich ist, benenne den
+konkreten Schritt und setze die Einrichtung anschließend fort.
 
 ## 1. Skill in Agentensystemen installieren und aktualisieren
 
 1. Ermittle mit `euer-invoice doctor --format json` den absoluten Bundle-Pfad
    (`skill.bundle_path`) und die erwartete Skill-Version (`skill.expected_version`) der
    tatsächlich aufgerufenen CLI.
-2. Kopiere den **gesamten** Ordner aus `skill.bundle_path` in den Skill-Ordner deines
-   Agentensystems (z. B. unter `skills/euer-invoice/` bei Hermes, Claude Code oder OpenCode).
+2. Ermittle das Skill-Verzeichnis der aktiven Agentenumgebung und kopiere den
+   **gesamten** Ordner aus `skill.bundle_path` dorthin.
    Ersetze die alte Skill-Kopie vollständig, einschließlich des Unterordners `references/`.
    Ergänze oder bearbeite Dateien im Skill nicht lokal.
-3. Lade den Skill neu (neue Sitzung oder Agent neu starten), lies `SKILL.md` und bei
-   Bedarf diese Referenzdatei.
-4. Bestätige erst danach die Version aus deiner tatsächlich verwendeten `SKILL.md`:
+3. Lade den Skill in der aktiven Umgebung neu. Ist dafür ein Sitzungsneustart nötig,
+   bitte den Nutzer darum. Lies anschließend die geladene `SKILL.md`.
+4. Bestätige erst danach die Version aus der geladenen `SKILL.md`:
    ```bash
    euer-invoice setup --set skill.version "0.4.1" --format json
    ```
 5. Prüfe `euer-invoice doctor --format json`: Das Feld `skill.status` muss `"current"` sein.
 
-- **Hermes:** Lege den vollständigen Ordner im Hermes-Skill-Verzeichnis ab; beim Update
-  den Ordner vollständig austauschen und eine neue Hermes-Sitzung beginnen.
-- **Claude Code:** Lege den vollständigen Ordner als Skill unter dem von Claude Code
-  verwendeten Skill-Verzeichnis ab; beim Update den Ordner vollständig austauschen.
-- **OpenCode:** Lege ihn im OpenCode-Skill-Verzeichnis ab; beim Update den Ordner
-  vollständig austauschen und die Sitzung neu starten.
-
-Prüfe den konkreten Skill-Pfad deiner Agenteninstallation. Kannst du den Skill wegen
-fehlender Rechte nicht ersetzen, informiere den Nutzer. Für einen einzelnen Aufruf
-kann `--ignore-skill-version` die Sperre übergehen; das behebt den abweichenden Stand nicht.
+Kannst du den Skill wegen fehlender Rechte nicht ersetzen, informiere den Nutzer.
+Für einen einzelnen Aufruf kann `--ignore-skill-version` die Sperre übergehen;
+das behebt den abweichenden Stand nicht.
 
 ## 2. CLI-Installation
 
-### Empfohlene Installation (im selben Environment wie `euer` oder via pipx)
+### macOS und Linux
 
-Damit Hermes oder dein Terminal die CLI ausführen können, installiere `euer-invoice`:
+Mit vorhandenem Homebrew:
 
 ```bash
-# Im selben Python-Environment wie euer (z. B. venv deines Buchhaltungsordners):
+brew tap curiousmarkus/euer
+brew install curiousmarkus/euer/euer-invoice
+```
+
+Falls Homebrew das Laden mit `untrusted tap` verweigert, gib gezielt diese Formula
+frei und wiederhole die Installation:
+
+```bash
+brew trust --formula curiousmarkus/euer/euer-invoice
+brew install curiousmarkus/euer/euer-invoice
+```
+
+Die Formula installiert Python, Java und die gepinnte Toolchain gemeinsam.
+Alternativ nutze pipx mit Python 3.11+ und richte Java nach Abschnitt 3 ein:
+
+```bash
+pipx install euer-invoice
+```
+
+### Windows nativ (PowerShell)
+
+WSL ist für `euer-invoice` nicht erforderlich. Verwende eine vorhandene Python-
+Installation ab 3.11 und Java ab 21. Fehlt Python, nutze den
+[offiziellen Windows-Installer](https://www.python.org/downloads/windows/).
+Die folgenden Befehle setzen den Python-Launcher `py` voraus; alternativ verwende
+den absoluten Pfad der gewählten Python-Installation.
+
+```powershell
+py --version
+py -m pip install --user pipx
+py -m pipx ensurepath
+py -m pipx install euer-invoice
+```
+
+Nach `ensurepath` kann ein neues Terminal bzw. eine neue Agentensitzung nötig sein,
+damit `euer-invoice` gefunden wird. Details: [Python Packaging Guide](https://packaging.python.org/en/latest/guides/installing-stand-alone-command-line-tools/).
+Prüfe vor weiteren Schritten `euer-invoice --version` in der laufenden Shell.
+
+Falls Java fehlt, installiere es beispielsweise mit vorhandenem WinGet:
+
+```powershell
+winget install --id EclipseAdoptium.Temurin.21.JDK --exact
+```
+
+Öffne nach der Installation bei Bedarf eine neue Sitzung und prüfe `java -version`.
+Ohne WinGet ist der [Temurin-Installer](https://adoptium.net/installation) eine
+Alternative. Der Java-Weg ist auch im [Microsoft-Leitfaden](https://learn.microsoft.com/windows/dev-environment/java/) beschrieben.
+Danach folge Abschnitt 3 für die Toolchain und Abschnitt 1 für den Skill.
+Ein Agent, der bereits in WSL läuft, verwendet stattdessen den Linux-Weg innerhalb
+derselben Umgebung; mische Windows- und WSL-Installationen nicht.
+
+### Bestehendes `euer`-Environment und Entwicklung
+
+Installiere die CLI bei einem bestehenden Python-Environment in derselben Umgebung:
+
+```bash
+# Im selben Python-Environment wie euer:
 pip install euer-invoice
 
-# Oder als eigenständiges globales Tool via pipx:
-pipx install euer-invoice
-
-# Für Entwickler aus dem lokalen Checkout:
+# Aus einem lokalen Checkout:
 pip install -e /pfad/zu/euer-buchhaltung/euer-invoice
 ```
 
 Wird `euer-invoice` im selben Python-Environment wie `euer` installiert, registriert der
 Entry-Point die identischen Befehle automatisch auch unter `euer invoice`.
-Die Standalone-CLI `euer-invoice` benötigt keine initialisierte `euer`-Datenbank und ist
-der empfohlene Standardaufruf für Rechnungs-Agenten. Der `euer`-Host verlangt dagegen
+Verwende standardmäßig die Standalone-CLI `euer-invoice`; sie benötigt keine
+initialisierte `euer`-Datenbank. Der `euer`-Host verlangt dagegen
 seine initialisierte Core-Datenbank und bestätigte Core-Skill-Version auch für Plugins.
 
 Paketinstallation und Online-Toolchain-Setup setzen veröffentlichte Release-Artefakte
 voraus. Toolchain-Archive und öffentliche Nutzertexte liegen unter
 [GitHub Releases](https://github.com/curiousmarkus/euer-invoice-releases/releases).
-Der Download benötigt keinen Zugang zum privaten Entwicklungsrepository. Nach Veröffentlichung der zugehörigen Tap-Formula installiert
-`brew install curiousmarkus/euer/euer-invoice` Python-Paket, Java und Bundle gemeinsam;
-ein lokaler Maven-Build ist bei Paketinstallationen nicht nötig. Kunden- und
-Entwurfsverwaltung sind auch ohne Java nutzbar, Erzeugung und Prüfung benötigen die Toolchain.
+Nutze die veröffentlichten Pakete ohne Zugriff auf das private Entwicklungsrepository
+oder lokalen Maven-Build. Kunden- und Entwurfsverwaltung sind auch ohne Java nutzbar;
+Erzeugung und Prüfung benötigen die Toolchain.
 
 ## 3. Java- und KoSIT-Toolchain einrichten
 
@@ -103,8 +164,8 @@ Schlüssel nicht.
 
 ## 4. Ersteinrichtung (Aussteller-Profil / Onboarding)
 
-Bevor Rechnungsentwürfe angelegt oder ausgestellt werden können, muss das Aussteller-Profil
-hinterlegt werden.
+Hinterlege vor dem ersten Rechnungsentwurf das Ausstellerprofil aus bekannten Angaben
+und kläre fehlende Fakten mit dem Nutzer.
 
 1. **Ausstellerdaten zusammenstellen (`seller.json`):**
    ```json
@@ -139,7 +200,7 @@ hinterlegt werden.
 
 ## 5. Freigabemodus und Konfiguration
 
-`chat` ist der Standard: Der Agent zeigt die HTML-Vorschau und registriert die
+Im Standardmodus `chat` zeige die HTML-Vorschau und registriere die
 Zustimmung des Nutzers zur konkreten Revision. Webserver und Freigabeschlüssel sind
 für diesen Ablauf nicht erforderlich. Die Engine authentifiziert dabei selbst kein
 Chatkonto. `strict` verlangt einen Ed25519-Nachweis des authentifizierten Gateways.
@@ -206,11 +267,11 @@ euer-invoice setup --set export.directory "./rechnungen" --format json
 
 - `euer-invoice` speichert Rechnungen, Kontakte und Zähler in einer eigenen SQLite-Datenbank:
   Ein explizites `--db PFAD` hat Vorrang vor `EUER_INVOICE_DB`, sonst gilt `./invoice.db`.
-  Alle Befehle unterstützen `--format json|table`; als Agent verwende JSON.
-- Zugehörige Original-XMLs und Validierungsberichte werden schreibgeschützt unter
+  Verwende `--format json` für die Auswertung der Antworten.
+- Zugehörige Original-XMLs und Validierungsberichte liegen schreibgeschützt unter
   `<db-name>.artifacts/`.
 - **Architektur-Grundsatz:** Die Rechnungsdatenbank bleibt strikt von der `buchhaltung.db`
-  des Core-Systems `euer` getrennt. Der Agent bildet die Brücke:
+  des Core-Systems `euer` getrennt. Verwende je nach Vorgang:
   - Bei Rechnungserstellung: `euer-invoice`
   - Bei Zahlungseingang: Betriebseinnahme in `euer` buchen + Zahlung in `euer-invoice` via
     `euer-invoice payment record --id <ID> --amount ... --date ...` dokumentieren.
@@ -231,16 +292,21 @@ euer-invoice license activate SCHLUESSEL --format json
 
 Ohne Zeitangabe gilt der aktuelle Monat. `doctor` und `license status` zeigen
 `period`, `used_in_month`, `issued_this_month` und `remaining`; Jahreszähler sind nur
-informativ. `doctor`, `setup` und `license` funktionieren ohne Skill-Bestätigung.
+informativ. `--year` und `--month` wählen nur den Zeitraum des Freikontingents,
+keine Lizenzjahre. `doctor`, `setup` und `license` funktionieren ohne Skill-Bestätigung.
 Bewahre Schlüssel vertraulich auf und gib in Antworten nur den Status wieder.
 
 Die Offline-Prüfung verwendet das Ed25519-Format `EUER-LIC-1` und denselben
 Master-Public-Key wie `euer-datev`. Jede Lizenz benötigt ein ausdrückliches Produkt:
 `invoice` für Rechnungen, `datev` für DATEV oder `pro` für beide Module. Der `tier`
-allein schaltet kein Produkt frei. `years: [2026]` erlaubt Rechnungen mit
-Rechnungsdatum 2026 unabhängig vom aktuellen Kalenderjahr. Auch Pro-Lizenzen
-beachten ihre Jahre; nur Kanzlei-Lizenzen mit `years: null` sind jahresunabhängig.
-Die Produktgrenzen gelten weiterhin. Eine reine DATEV-Lizenz genügt nicht.
+allein schaltet kein Produkt frei. Der Invoice-Einmalkauf verwendet `product: invoice`
+und `years: null`: alle Rechnungsjahre sind zeitlich unbefristet freigeschaltet,
+auch 2027 und später. Für `product: datev` oder `pro` erfordert `years: null`
+`tier: kanzlei`. Bei Pro-Schlüsseln begrenzt die Jahresliste ausschließlich DATEV;
+Invoice bleibt für alle Rechnungsjahre freigeschaltet. Ein Invoice-Einmalkauf
+schaltet DATEV nicht frei; die DATEV-Lizenz
+gilt für das vereinbarte Buchungsjahr. Pakete mit Invoice für alle Jahre
+und DATEV für ein einzelnes Jahr verwenden zwei getrennte Produktschlüssel.
 
 Schlüssel aus diesen Quellen werden zusammengeführt:
 
@@ -249,7 +315,7 @@ Schlüssel aus diesen Quellen werden zusammengeführt:
 - `~/.config/euer/pro.lic` und `~/.config/euer/invoice.lic`.
 
 `XDG_CONFIG_HOME` bzw. Windows `%APPDATA%` ändern die Basis der Lizenzdateipfade.
-Aktivierung erhält bereits gespeicherte Jahreslizenzen. Kombinierte Schlüssel
+Aktivierung erhält andere gespeicherte Produktschlüssel. Kombinierte Schlüssel
 (`product: pro`) werden in `euer/pro.lic` gespeichert und von beiden Modulen erkannt;
 eine zweite Aktivierung ist unnötig. Separate Produktschlüssel sind ebenfalls möglich.
 

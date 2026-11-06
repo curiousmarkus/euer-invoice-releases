@@ -1,14 +1,14 @@
 ---
 name: euer-invoice
-description: "Erstelle und verwalte Rechnungsentwürfe mit euer-invoice, kläre fehlende Pflichtangaben und stelle nach Nutzerfreigabe XRechnung 3.0.2 CII aus. Prüfe empfangene CII-/UBL-XML und ZUGFeRD-/Factur-X-PDF mit inspect. Nutze den Skill auch für Kundenstamm, Zahlungen und Lizenzstatus."
+description: "Erstelle und verwalte Rechnungsentwürfe mit euer-invoice, kläre Pflichtangaben und stelle nach Nutzerfreigabe XRechnung 3.0.2 CII aus. Bereite XML, Lese-PDF und Begleit-Mail für den Versand vor. Prüfe empfangene CII-/UBL-XML und ZUGFeRD-/Factur-X-PDF mit inspect. Nutze den Skill auch für Kundenstamm, Zahlungen und Lizenzstatus."
 metadata:
   version: "0.4.1"
 ---
 
 # E-Rechnungs-Assistent
 
-Die CLI ist die deterministische Engine. Du übersetzt den Nutzerauftrag in bekannte
-Fakten, führst den Rückfrage-Dialog und präsentierst die berechneten Ergebnisse.
+Übersetze den Nutzerauftrag in CLI-Aufrufe, kläre fehlende Fakten und präsentiere
+die berechneten Ergebnisse.
 Nutze `--format json`; prüfe `ok`, Exit-Code und stabile Fehlercodes bei jedem Aufruf.
 Beschreibe technische Prüfungen und Speichermechanismen konkret. Bei Fragen zur
 rechtlichen Konformität verweise auf die noch offene gesonderte Prüfung des Gesamtprozesses.
@@ -23,8 +23,8 @@ Lies nach einem Skill-Update die neue `SKILL.md` und bestätige **erst danach** 
 euer-invoice setup --set skill.version "0.4.1" --format json
 ```
 
-Die Bestätigung ist eine Selbstauskunft. Bei fehlenden Update-Rechten informiere den
-Nutzer; `--ignore-skill-version` ermöglicht einen einzelnen CLI-Aufruf.
+Bei fehlenden Update-Rechten informiere den Nutzer;
+`--ignore-skill-version` ermöglicht einen einzelnen CLI-Aufruf.
 
 ## 1. Bekannte Daten prüfen & Kundenstamm pflegen
 
@@ -38,8 +38,8 @@ euer-invoice contact update --id CONTACT_ID --patch contact-patch.json --idempot
 
 Übernimm `contact_id` oder bekannte `buyer`-Felder. `contact search`/`show` liefern
 `recent_buyer_references` (bisherige Käuferreferenzen/Leitweg-IDs) und `last_invoice_id`.
-Bei „Wie letztes Mal“-Aufträgen direkt mit `draft clone --from-id LAST_INVOICE_ID` klonen
-und die letzte Referenz vorschlagen. Neue Stammdaten mit `contact update` pflegen.
+Klone bei „Wie letztes Mal“-Aufträgen mit `draft clone --from-id LAST_INVOICE_ID`
+und schlage die letzte Referenz vor. Pflege neue Stammdaten mit `contact update`.
 `euer-invoice` nutzt eine eigene Rechnungsdatenbank (`invoice.db`); verwende stets das
 Ausstellerprofil aus `euer-invoice seller show`.
 
@@ -124,7 +124,8 @@ euer-invoice draft preview --id ID --html-out vorschau.html --format json
 `draft preview` prüft die XRechnung mit KoSIT und erzeugt automatisch eine
 eigenständige, mobil-optimierte HTML-Datei unter `preview_html_path`.
 Bei `READY_FOR_APPROVAL` und `validation_status: VALID` präsentiere Empfänger,
-Rechnungs-/Leistungsdatum, Positionen, Netto, USt, Brutto, Revision und Snapshot-Hash.
+Rechnungs-/Leistungsdatum, Positionen, Netto, USt und Brutto zur Prüfung.
+Halte Revision und Snapshot-Hash für die Freigabe- und Ausstellungsbefehle fest.
 Sende die Datei unter `preview_html_path` direkt als Anhang im beauftragten Chat
 oder öffne sie lokal, damit der Nutzer alle Angaben prüfen kann. Dafür ist kein
 Webserver erforderlich. `show --id ID` liefert die aktuelle Vorschau-Datei erneut.
@@ -156,15 +157,16 @@ euer-invoice issue --id ID --expected-revision REV \
 
 `--approved-by` ist optional (Default `user:chat`); `--proof` entfällt im Chat-Modus.
 Nach `FINALIZED` liegt die schreibgeschützt gespeicherte XML-Datei unter `artifact.file_path`.
-Ist `export.directory` konfiguriert (`setup --set export.directory "./rechnungen"`),
-speichert `issue` die Kundenkopie (`{nummer}_{aussteller}_{kunde}.xml`) automatisch
-unter `artifact.exported_path`. Für manuelle oder abweichende Exporte:
+Mit konfiguriertem `export.directory` liefert `issue` zusätzlich die XML-Kundenkopie
+unter `artifact.exported_path`.
 
-```bash
-euer-invoice export --id ID [--out pfad/zur/datei.xml] --format json
-```
-
-Sende dem Nutzer/Kunden die Kundenkopie aus `artifact.exported_path` (bzw. `exported_path`).
+Nach Ausstellung oder bei einem Versandauftrag lies
+[Versandpaket, PDF und E-Mail-Alternative](references/delivery.md).
+Liefere die finale XML, ein lokal gedrucktes Lese-PDF und den Mailentwurf.
+Bei fehlendem Renderer oder Druckfehler nutze `email_draft.body` mit Positionen und
+Zahlungsdaten als E-Mail-Alternative und benenne das fehlende PDF.
+Ein Versandauftrag endet nach bestätigter Übermittlung; ohne Mailkanal liefere
+Dateien und Text zum Versand. Die CLI selbst versendet keine E-Mails.
 Vor Ausstellung: bei Änderungswünschen `draft update` und erneut `draft preview` ausführen.
 
 ### Strenger Modus: Kanzlei-Gateway oder optionale Web-Vorschau
@@ -197,11 +199,12 @@ wiederhole denselben Auftrag mit demselben Idempotenzschlüssel.
 `IDEMPOTENCY_CONFLICT` erfordert Klärung der Auftragszuordnung.
 
 Ohne Lizenz sind drei Ausstellungen pro Kalendermonat des Rechnungsdatums möglich.
-Stornierte Originale zählen weiter, Wiederholungen desselben Auftrags nicht erneut. Bei `LICENSE_REQUIRED`
-zeige Monat (`period`), Verbrauch (`used_in_month`) und `purchase_url`; der Nutzer
-kann seinen Schlüssel mit
-`euer-invoice license activate SCHLUESSEL` aktivieren. Wiederhole danach denselben
-Ausstellungsauftrag. Der Ablauf ist erst bei `FINALIZED` abgeschlossen.
+Stornierte Originale zählen weiter, Wiederholungen desselben Auftrags nicht erneut.
+Bei `LICENSE_REQUIRED` zeige Monat (`period`), Verbrauch (`used_in_month`) und
+`purchase_url`. Aktiviere einen vom Nutzer bereitgestellten Schlüssel mit
+`euer-invoice license activate SCHLUESSEL`. Wiederhole danach denselben
+Ausstellungsauftrag. Die Ausstellung ist bei `FINALIZED` abgeschlossen;
+anschließend folgt die Vorbereitung des Versandpakets wie oben beschrieben.
 
 ## 5. Stornierung & Rechnungskorrektur
 
@@ -277,7 +280,8 @@ euer-invoice setup --install-toolchain --from-archive toolchain.tar.gz --format 
 
 `doctor`, `setup` und `license` funktionieren ohne Skill-Bestätigung. Entwürfe,
 Vorschauen, Empfangsprüfungen, Stornierungen und Zahlungen sind unbegrenzt frei.
-Jahreslizenzen für `invoice` sowie Pro-/Kanzlei-Bundles erweitern die Ausstellung.
+Der Invoice-Einmalkauf gilt für alle Rechnungsjahre. DATEV wird separat je
+Buchungsjahr lizenziert.
 Bewahre Lizenzschlüssel vertraulich auf; gib in Antworten nur den Status wieder.
 Toolchain-Setup prüft Archiv- und Dateihashes, benötigt Java >= 21 und richtet das
 Freigabe-Schlüsselpaar neben der gewählten Rechnungsdatenbank ein. Folge bei fehlendem
@@ -285,5 +289,5 @@ Java dem ausgegebenen Installationshinweis und wiederhole den Setup-Aufruf.
 
 ## 9. Referenzen
 
-- [Installation, Einrichtung und Skill-Updates](references/installation_and_setup.md): Bei fehlender Einrichtung, Konfigurationsfragen, Lizenzaktivierung oder Skill-Updates lesen.
-- [Betrieb](references/operations.md): Für Exportpfade, Sicherung/Umzug, Wiederaufnahme, Gateway-/Webserver-Betrieb und Prüfgrenzen von Eingangsrechnungen lesen.
+- [Setup](references/installation_and_setup.md): Bei Konfigurationsfragen und Lizenzdetails lesen.
+- [Betrieb](references/operations.md): Für Exportpfade, Sicherung, Umzug, Wiederaufnahme und Prüfgrenzen empfangener Rechnungen lesen.

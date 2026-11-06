@@ -1,8 +1,5 @@
 # Betrieb: Vorschau, Export, Sicherung und Empfangsprüfung
 
-Lies die jeweils passende Sektion bei Fragen zu Dateipfaden und Wiederaufnahme,
-bei Sicherung oder Umzug, beim Betrieb eines Freigabe-Gateways bzw. Webservers
-oder bei Eingangsdateien mit unklarem Profil oder Formatfehlern.
 Konfigurationswerte stehen in der [Setup-Referenz](installation_and_setup.md).
 
 ## Vorschau und Kundenexport
@@ -23,10 +20,12 @@ Ein relativer Standard-Exportordner wird am Verzeichnis der Datenbank aufgelöst
 Das Namensmuster ist `{nummer}_{aussteller}_{kunde}.xml`; Namen werden für Dateipfade
 bereinigt und gekürzt.
 
-Für einen manuellen Export:
+Exportiere eine Kundenkopie mit:
 
 ```bash
 euer-invoice export --id ID --out rechnung.xml --format json
+# Finale Empfängerfassung und Mailentwurf aus derselben XML:
+euer-invoice export --id ID --out rechnung.xml --html-out rechnung.html --email-out begleitmail.txt --format json
 # Mit konfiguriertem Standard-Exportordner genügt:
 euer-invoice export --id ID --format json
 ```
@@ -34,6 +33,13 @@ euer-invoice export --id ID --format json
 Die Antwort enthält `exported_path`. Versende bei beauftragtem Rechnungsversand die
 Kundenkopie. Die Originalablage ist kein Ersatz für eine Sicherung oder eine
 organisatorische Archivierung.
+
+`recipient_html_path` enthält die druckbare finale Lesefassung;
+`email_draft_path` den Mailtext. `email_draft` liefert Betreff und Nachricht auch als JSON.
+Für ein separates Lese-PDF oder die E-Mail-Alternative folge dem Ablauf in
+[Versandpaket und PDF](delivery.md).
+Die einzelnen Exportdateien werden atomar geschrieben; bei einem Speicherfehler kann
+bereits ein Teil des Pakets vorliegen. Wiederhole den Export nach Behebung des Fehlers.
 
 ## Wiederaufnahme nach Abbruch
 
@@ -49,8 +55,7 @@ Bei `CONFLICT_REVISION` den aktuellen Entwurf lesen und erneut abstimmen.
 
 ## Sicherung und Umzug
 
-Eine Backup-/Restore-CLI ist noch nicht implementiert. Sichere den aktuellen Bestand
-manuell als zusammengehörige Einheit:
+Sichere Datenbank und Artefaktverzeichnis durch Dateikopien als zusammengehörige Einheit:
 
 1. Alle schreibenden CLI-Prozesse und gegebenenfalls den Vorschau-Server stoppen.
 2. Die Datenbank und das zugehörige Artefaktverzeichnis gemeinsam kopieren, z. B.

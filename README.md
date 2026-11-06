@@ -8,6 +8,9 @@ berechnet Beträge und erzeugt unabhängig geprüfte Rechnungen.
   Storno-Vermerke und Zahlungen.
 - HTML-Vorschau und ausdrückliche Nutzerfreigabe im Chat; optional signierte Gateway-
   Freigaben oder eine lokale Web-Vorschau.
+- Finale Empfängerfassung und Begleit-Mail aus der ausgestellten XML; der Skill
+  erzeugt mit einem vorhandenen lokalen Browser ein separates Lese-PDF oder liefert
+  die Rechnungspositionen direkt als lesbaren Mailtext.
 - EUR, 19 %/7 % auch gemischt, Kleinunternehmerbefreiung, steuerfreie Leistungen,
   Reverse Charge und bis zu 50 Positionen.
 - Empfangene CII-/UBL-Rechnungen und hybride ZUGFeRD-/Factur-X-PDFs lesen und prüfen.
@@ -15,7 +18,8 @@ berechnet Beträge und erzeugt unabhängig geprüfte Rechnungen.
 Python 3.11+ ohne zusätzliche Python-Laufzeitpakete, SQLite und Java 21+ für
 Erzeugung und Prüfung. Die Engine verwendet Mustangproject und einen separaten,
 gepinnten KoSIT-Validator. Nach eingerichteter Toolchain ist der Betrieb offline möglich.
-PDF/A-Erzeugung, automatischer Bank-Sync und Mahnungen sind noch nicht enthalten.
+ZUGFeRD-Ausgabe ist auf der Roadmap. PDF/A-Erzeugung, automatischer Bank-Sync und
+Mahnungen sind noch nicht enthalten.
 Die Empfangsprüfung nutzt derzeit das XRechnung-Regelbundle; sie validiert nicht
 sämtliche ZUGFeRD-/Factur-X-Profile.
 
@@ -58,7 +62,8 @@ Prüfstatus. Details und Grenzen stehen im [Skill](https://github.com/curiousmar
 Ohne Lizenz sind drei Ausstellungen je Kalendermonat des Rechnungsdatums und lokaler
 Datenbank frei. Entwürfe, Vorschauen, Empfangsprüfungen, Stornierungen und Zahlungen
 sind unbegrenzt frei; [Lizenzen](https://github.com/curiousmarkus/euer-invoice-releases/blob/main/docs/skills/euer-invoice/references/installation_and_setup.md#7-freikontingent-und-lizenzaktivierung)
-erweitern die Ausstellung für die freigeschalteten Rechnungsjahre.
+schalten als Einmalkauf unbegrenzt viele Rechnungen für alle Rechnungsjahre frei.
+DATEV bleibt separat über Jahreslizenzen lizenziert.
 
 Sichere Datenbank **und** zugehöriges Artefaktverzeichnis gemeinsam. Vorgehen und
 Wiederaufnahme nach einem Abbruch stehen in der
