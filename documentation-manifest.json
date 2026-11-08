@@ -1,13 +1,15 @@
 {
   "format_version": 1,
-  "version": "0.4.1",
+  "version": "0.5.0",
   "files": {
     "LICENSE": "ff3d22f9549b7a97031ba71fe85bb55905a8a2bbc492e0f179756e4f32a88a37",
-    "README.md": "27cc7e8975eb6338817fca55e7b89769b68c0d99247a266545fab96a5c950326",
+    "README.md": "6f4f58912e82053c6914474c7d64148e5b5639cfe2099f2cf741df9c81e87a3c",
     "THIRD_PARTY_NOTICES.md": "bca93434833045ebdcc9f71a6a7bf6b3116d8d64a548c4d8d3398da4d8f562f0",
-    "docs/skills/euer-invoice/SKILL.md": "2ec4f5c0c547a1b08c204f9d7db2e3335a7a42e424012ac794e73e9865bbd559",
+    "docs/skills/euer-invoice/SKILL.md": "f76ea60ac6270f9f862124f9eb35514b2506b52e290203d60cd6c936267d6102",
+    "docs/skills/euer-invoice/references/container.md": "d99955eaac9d44bb1660b89fdcc1ac00e8e6825b555c044d8426ad516820553b",
     "docs/skills/euer-invoice/references/delivery.md": "381e1f8f885f73eb6030f69d84c109f741a343051e48ef076f9ae8c91409bf92",
-    "docs/skills/euer-invoice/references/installation_and_setup.md": "1778352c01326704cbbf8432bf2e3c21a286d1167fa45c1384daec20e13e9443",
-    "docs/skills/euer-invoice/references/operations.md": "f602a503a3d0756b3ffb939f90d8bda3ecc27dbc0e98dd684cec153dc2111c61"
+    "docs/skills/euer-invoice/references/identifiers.md": "b4b2ddd36ac1e9c6326d0071c05faeaf20d94ee09301d1b5dbf697d07ebb8520",
+    "docs/skills/euer-invoice/references/installation_and_setup.md": "94f600fe7ce5d8c3dfbfc680cf9335cea4f16a899ea225bb01417e262da2ee53",
+    "docs/skills/euer-invoice/references/operations.md": "badaceba90128bdf68963e5413e5c5d085ddfa3c936319e5114fa1eef38b05bd"
   }
 }

@@ -55,24 +55,99 @@ Bei `CONFLICT_REVISION` den aktuellen Entwurf lesen und erneut abstimmen.
 
 ## Sicherung und Umzug
 
-Sichere Datenbank und Artefaktverzeichnis durch Dateikopien als zusammengehörige Einheit:
+Die CLI sichert Datenbank und referenzierte Rechnungsdateien gemeinsam in einer
+ZIP-Datei. Vor der ersten schreibenden Transaktion eines Tages wird automatisch
+lokal gesichert; vor einer Migration zusätzlich der aktuelle Altbestand. Das gilt
+auch für Änderungen über den Vorschau-Server. Scheitert die nötige Sicherung,
+bleibt die Datenänderung aus. Doctor, Empfangsprüfung und Lesezugriffe lösen keine
+Sicherung aus. Ein neuer leerer Bestand braucht noch kein Vorab-Backup.
 
-1. Alle schreibenden CLI-Prozesse und gegebenenfalls den Vorschau-Server stoppen.
-2. Die Datenbank und das zugehörige Artefaktverzeichnis gemeinsam kopieren, z. B.
-   `invoice.db` **und** `invoice.db.artifacts/`.
-3. Die Kopie an einem getrennten Sicherungsort aufbewahren. Konfiguration,
-   Lizenzdateien und benötigte Freigabeschlüssel zusätzlich sicher verwahren;
-   private Schlüssel entsprechend ihrer Zugriffsgrenze getrennt schützen.
-4. Beim Wiederherstellen Datenbank und Artefakte gemeinsam unter denselben relativen
-   Namen zurückspielen. Nutze zunächst einen freien Zielort, um den bisherigen
-   Bestand zu erhalten.
-5. Mit `--db` die wiederhergestellte Datenbank wählen und mit `show --id ID`
-   referenzierte Originale prüfen. Auch Vorschauen und benötigte Konfiguration prüfen,
-   bevor der Betrieb wieder aufgenommen wird.
+### Explizites Backup und Prüfung
 
-Relative Originalreferenzen bleiben bei einem gemeinsamen Umzug gültig.
-Kundenkopien können aus den Originalen erneut exportiert werden. Hash-Prüfungen
-ersetzen weder Backup noch die Aufbewahrung der zugehörigen Dateien.
+```bash
+euer-invoice --db invoice.db backup create --out sicherung.zip --format json
+euer-invoice backup verify --file sicherung.zip --format json
+euer-invoice --db invoice.db backup check-live --format json
+```
+
+`create` erstellt per SQLite-Online-Backup einen konsistenten Snapshot, prüft
+Datenbankintegrität, Fremdschlüssel und Rechnungs-Snapshot-Hashes und nimmt die
+referenzierten Original-XMLs, Prüfberichte und gespeicherten Vorschauen hinzu.
+Die Dateihashes müssen stimmen. Fehlende oder veränderte referenzierte Dateien
+führen zu `ARTIFACT_INTEGRITY`; ein falscher Rechnungs-Snapshot zu
+`SNAPSHOT_INTEGRITY`. Erst das vollständig geprüfte Archiv wird veröffentlicht.
+Ein bestehendes Archiv wird auch mit explizitem `--out` nicht überschrieben.
+Mit explizitem Ziel funktioniert die Sicherung auch bei defekter App-Konfiguration.
+
+`verify` prüft das Archiv isoliert und verändert keinen Rechnungsbestand.
+`check-live` prüft den gewählten aktuellen Bestand ohne ZIP-Erstellung. Doctor
+weist die Integrität zusätzlich unter `artifacts_ok` aus; `null` bedeutet, dass
+kein aktueller lesbarer Bestand geprüft werden konnte. Bei einem Fehler bleibt
+`ready` falsch und `next_steps` enthält einen Klärungs-/Wiederherstellungsschritt.
+Alle `backup`-Befehle funktionieren ohne Java und ohne Skill-Versionsbestätigung.
+
+Antworten enthalten je nach Befehl `backup_path`, `backup_sha256`, `created_at`,
+`counts` sowie `verified` oder `restored`. `managed: true` kennzeichnet Archive,
+die der automatischen Rotation unterliegen; explizite Ausgabedateien sind `false`. Das ZIP enthält `invoice.db`,
+`manifest.json` und ausschließlich die referenzierten Dateien unter `artifacts/`.
+Unreferenzierte Altdateien, Kundenexporte, Konfiguration, Lizenzdateien und private
+Freigabeschlüssel gehören nicht ins Bundle. Verwahre die nötige Konfiguration und
+Schlüssel zusätzlich gemäß ihrer Zugriffsgrenze; ein Backup enthält vertrauliche
+Rechnungsdaten und Freigabehistorie.
+
+### Freier Zielbestand für Restore
+
+```bash
+euer-invoice --db wiederhergestellt/invoice.db backup restore --file sicherung.zip --format json
+euer-invoice --db wiederhergestellt/invoice.db backup check-live --format json
+euer-invoice --db wiederhergestellt/invoice.db show --id RECHNUNGS_ID --format json
+```
+
+Wähle einen neuen Zielbestand. Bereits vorhandene DB-, Artefakt- oder Journaldateien
+werden mit `RESTORE_TARGET_EXISTS` geschützt; ein Überschreiben mit `--force` ist
+nicht enthalten. Die vollständige Vorabprüfung erfolgt, bevor das Zielverzeichnis
+angelegt wird. Unterstützte ältere Schemata werden im isolierten Staging migriert.
+Originaldateien erhalten Schreibschutz; die Datenbank wird zuletzt veröffentlicht.
+Ein Prozessabbruch kann einen Artefaktordner ohne DB zurücklassen: Erhalte den
+Teilstand und nutze für einen erneuten Restore einen weiteren freien Zielort.
+
+Prüfe danach bekannte Rechnungen, Zahlungs-/Stornodaten und die benötigte
+Konfiguration. Relative Originalreferenzen und historische absolute Vorschau- bzw.
+Fehlerberichtpfade werden am neuen Bestand aufgelöst. Ein `BACKUP_RESTORED`-Eintrag
+hält die Herkunft fest. Nimm anschließend bewusst nur einen aktiven Rechnungsbestand
+in Betrieb. Kläre bereits nach dem Backup ausgestellte Rechnungen, bevor du die
+Nummernfolge fortsetzt; ein Restore kennt spätere Vorgänge nicht.
+
+### Standardablage und Rotation
+
+Standard ist `.euer-invoice-backups/` im Verzeichnis der Datenbank. Diese Ablage
+bleibt bei wechselnden Agentensitzungen gleich und liegt beim Docker-Beispiel im
+Daten-Volume. Dateinamen trennen Bestände über ihren absoluten Datenbankpfad.
+Automatische und ohne `--out` erzeugte Backups rotieren je Datenbank auf die
+neuesten zehn Archive; explizite Ausgabedateien werden nicht automatisch gelöscht.
+Vorhandene tägliche Sicherungen werden geprüft und bei Beschädigung neu erstellt.
+Die Tagesgrenze entspricht dem lokalen Datum des ausführenden Prozesses.
+
+Bei vorhandenem anderen Sicherungsziel kann der Agent es dauerhaft hinterlegen:
+
+```bash
+euer-invoice setup --set backups.directory /pfad/zum/sicherungsordner --format json
+euer-invoice setup --set backups.max_keep 10 --format json
+```
+
+Alternativ setzt `EUER_INVOICE_BACKUP_DIR` das Verzeichnis mit höchster Priorität.
+Relative TOML-Pfade beziehen sich auf den Config-Ordner, relative ENV-Pfade auf das
+Arbeitsverzeichnis. Erfrage hierfür keine Routineentscheidungen, wenn Standardablage
+oder ein bekanntes Sicherungsziel passen. Ein volles oder unzugängliches Ziel ist
+als technisches Problem zu beheben; schalte die Sicherung nicht stillschweigend ab.
+Bei `BACKUP_BUSY` nach Ende des konkurrierenden Vorgangs erneut versuchen.
+
+Eine lokale Sicherung schützt nicht vor Geräteverlust. Die tägliche Sicherung
+enthält den Stand vor der ersten Änderung, nicht automatisch alle später am Tag
+ausgestellten Rechnungen. Erstelle für einen aktuellen Stand explizit ein Backup
+und nutze vorhandene getrennte Sicherungsorte des Nutzers. Grenzen: höchstens
+500 MB Archiv-/entpackte Gesamtdaten, 10.000 Einträge und 1 MB Manifest. Ungültige
+Archive oder überschrittene Grenzen werden mit `BACKUP_INVALID` abgewiesen.
 
 ## Signierte Freigabe und optionale Web-Vorschau
 

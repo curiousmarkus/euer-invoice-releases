@@ -31,6 +31,7 @@ Mit Java 21+ im `PATH` oder unter `EUER_INVOICE_JAVA`:
 pipx install euer-invoice
 euer-invoice setup --install-toolchain --format json
 euer-invoice doctor --format json
+euer-invoice skill install --target /pfad/zu/skills --format json
 ```
 
 Die Paketinstallation und der Toolchain-Download setzen veröffentlichte PyPI-/Release-
@@ -38,8 +39,9 @@ Artefakte im [öffentlichen Download-Repository](https://github.com/curiousmarku
 Offline-Installation und Homebrew beschreibt die
 [Setup-Referenz](https://github.com/curiousmarkus/euer-invoice-releases/blob/main/docs/skills/euer-invoice/references/installation_and_setup.md).
 
-Installiere den **gesamten Skill-Ordner** aus `doctor.skill.bundle_path` im
-Agentensystem, einschließlich `references/`. Lies die dortige `SKILL.md`, bestätige
+Der Skill-Befehl installiert den **gesamten Skill-Ordner** unter
+`<target>/euer-invoice/`, einschließlich `references/`. `skill path` zeigt seine Quelle.
+Lies die installierte `SKILL.md`, bestätige
 anschließend ihre Version und richte das Ausstellerprofil ein. Die Schritte stehen
 in der [Skill-Einrichtung](https://github.com/curiousmarkus/euer-invoice-releases/blob/main/docs/skills/euer-invoice/references/installation_and_setup.md#1-skill-in-agentensystemen-installieren-und-aktualisieren).
 `doctor.skill.status` muss danach `current` sein.
@@ -65,7 +67,9 @@ sind unbegrenzt frei; [Lizenzen](https://github.com/curiousmarkus/euer-invoice-r
 schalten als Einmalkauf unbegrenzt viele Rechnungen für alle Rechnungsjahre frei.
 DATEV bleibt separat über Jahreslizenzen lizenziert.
 
-Sichere Datenbank **und** zugehöriges Artefaktverzeichnis gemeinsam. Vorgehen und
+Die CLI sichert Datenbank **und** referenzierte Artefakte vor der ersten Änderung
+des Tages automatisch. Für aktuelle portable Sicherungen und Restore gibt es
+`backup create`, `backup verify` und `backup restore`. Vorgehen und
 Wiederaufnahme nach einem Abbruch stehen in der
 [Betriebsreferenz](https://github.com/curiousmarkus/euer-invoice-releases/blob/main/docs/skills/euer-invoice/references/operations.md).
 

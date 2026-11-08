@@ -2,25 +2,25 @@
 name: euer-invoice
 description: "Erstelle und verwalte Rechnungsentwürfe mit euer-invoice, kläre Pflichtangaben und stelle nach Nutzerfreigabe XRechnung 3.0.2 CII aus. Bereite XML, Lese-PDF und Begleit-Mail für den Versand vor. Prüfe empfangene CII-/UBL-XML und ZUGFeRD-/Factur-X-PDF mit inspect. Nutze den Skill auch für Kundenstamm, Zahlungen und Lizenzstatus."
 metadata:
-  version: "0.4.1"
+  version: "0.5.0"
 ---
 
 # E-Rechnungs-Assistent
 
-Übersetze den Nutzerauftrag in CLI-Aufrufe, kläre fehlende Fakten und präsentiere
-die berechneten Ergebnisse.
-Nutze `--format json`; prüfe `ok`, Exit-Code und stabile Fehlercodes bei jedem Aufruf.
-Beschreibe technische Prüfungen und Speichermechanismen konkret. Bei Fragen zur
-rechtlichen Konformität verweise auf die noch offene gesonderte Prüfung des Gesamtprozesses.
+Übernimm Einrichtung und Rechnungsablauf selbstständig. Erfrage nur fehlende
+fachliche Fakten und die Freigabe zur Ausstellung; technische Routinen erledigst du.
+Nutze `--format json`; prüfe `ok`, Exit-Code und stabile Fehlercodes.
+Beschreibe Prüfungen konkret; rechtliche Konformität des Gesamtprozesses ist ungeprüft.
 
-Prüfe vor fachlichen Befehlen mit `euer-invoice doctor --format json` die aktive
-Installation und ihren Skill-Status (`skill.status`). Ist die CLI nicht verfügbar,
-fehlt die Toolchain, das Ausstellerprofil oder ist der Skill veraltet (`skill.status != "current"`),
-lies die [Installations- und Setup-Referenz](references/installation_and_setup.md).
+Prüfe vor fachlichen Befehlen `euer-invoice doctor --format json`: `readiness` zeigt
+die Bereitschaft für den Auftrag, `ready` den eingerichteten Rechnungsworkflow.
+Bearbeite passende `next_steps` selbst; erfrage nur fehlende Fakten.
+Bei fehlender CLI oder Einrichtung lies die [Setup-Referenz](references/installation_and_setup.md).
+Hilfe: `euer-invoice setup --help`; Bundle: `euer-invoice skill path`.
 Lies nach einem Skill-Update die neue `SKILL.md` und bestätige **erst danach** die Version mit:
 
 ```bash
-euer-invoice setup --set skill.version "0.4.1" --format json
+euer-invoice setup --set skill.version "0.5.0" --format json
 ```
 
 Bei fehlenden Update-Rechten informiere den Nutzer;
@@ -42,6 +42,10 @@ Klone bei „Wie letztes Mal“-Aufträgen mit `draft clone --from-id LAST_INVOI
 und schlage die letzte Referenz vor. Pflege neue Stammdaten mit `contact update`.
 `euer-invoice` nutzt eine eigene Rechnungsdatenbank (`invoice.db`); verwende stets das
 Ausstellerprofil aus `euer-invoice seller show`.
+
+Bei Lieferantenkennungen, BR-CO-26 und Fragen zur Weitergabe der Steuernummer lies
+die [Identifikator-Referenz](references/identifiers.md). Pflege kundenspezifische
+Kreditorennummern als `seller_identifier` beim jeweiligen Empfängerkontakt.
 
 ## 2. Entwurf speichern, klonen und fehlende Fakten klären
 
@@ -92,11 +96,11 @@ Felder fehlen):
 ```
 
 ### Leistungsdatum vs. Leistungszeitraum & Umsatzsteuer-Optionen
-- **Leistungsdatum oder Leistungszeitraum:** Es muss entweder `service_date` (`YYYY-MM-DD`, BT-72) **oder** `service_period` (`{"start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD"}`, BG-14) angegeben sein (beide gleichzeitig sind ebenfalls zulässig).
-- **Regelbesteuerung (`seller.small_business: false`):** Positionen unterstützen `"19.00"` (Regelsteuersatz) und `"7.00"` (ermäßigter Steuersatz), auch gemischt innerhalb derselben Rechnung (Steuerkategorie `S`).
-- **Kleinunternehmerregelung (§ 19 UStG, `seller.small_business: true`):** Alle Positionen müssen `"vat_rate": "0.00"` führen; `seller.tax_exemption_reason` (oder `tax_exemption_reason` im Entwurf) ist Pflicht (Steuerkategorie `E`).
-- **Reverse Charge (§ 13b UStG / EU-B2B, `"reverse_charge": true`):** Alle Positionen müssen `"vat_rate": "0.00"` führen. Sowohl `seller.vat_id` als auch `buyer.vat_id` sind Pflicht (ausländische ISO-Ländercodes wie `"AT"`, `"NL"`, `"FR"` und EU-USt-IdNrn. werden unterstützt; Steuerkategorie `AE`).
-- **Steuerfreie Leistungen (§ 4 UStG, `"tax_exempt": true`):** Alle Positionen müssen `"vat_rate": "0.00"` führen und `tax_exemption_reason` muss angegeben sein (Steuerkategorie `E`).
+- **Leistungsangabe:** `service_date` (BT-72) oder `service_period` (BG-14) angeben; beide zusammen sind zulässig. Datenformat: `YYYY-MM-DD`.
+- **Regelbesteuerung (`seller.small_business: false`):** `vat_rate` je Position `"19.00"` oder `"7.00"`, auch gemischt; Kategorie `S`.
+- **Kleinunternehmer (§ 19 UStG, `seller.small_business: true`):** `vat_rate: "0.00"` für alle Positionen; Befreiungsgrund in `seller.tax_exemption_reason` oder `tax_exemption_reason` im Entwurf; Kategorie `E`. Eine vorhandene `seller.vat_id` ist zulässig.
+- **Reverse Charge (`reverse_charge: true`):** Alle Positionen `vat_rate: "0.00"`; `seller.vat_id` und `buyer.vat_id` erforderlich; Kategorie `AE`. Kombination mit `small_business: true` wird derzeit nicht unterstützt.
+- **Steuerfreie Leistung (§ 4 UStG, `tax_exempt: true`):** Alle Positionen `vat_rate: "0.00"`, Befreiungsgrund erforderlich; Kategorie `E`.
 
 Speichere `invoice_id`, `draft_revision` und `payload_sha256`. Frage den Nutzer kompakt
 nach `required_fields_missing`; der Entwurf darf unvollständig bleiben.
@@ -283,11 +287,12 @@ Vorschauen, Empfangsprüfungen, Stornierungen und Zahlungen sind unbegrenzt frei
 Der Invoice-Einmalkauf gilt für alle Rechnungsjahre. DATEV wird separat je
 Buchungsjahr lizenziert.
 Bewahre Lizenzschlüssel vertraulich auf; gib in Antworten nur den Status wieder.
-Toolchain-Setup prüft Archiv- und Dateihashes, benötigt Java >= 21 und richtet das
-Freigabe-Schlüsselpaar neben der gewählten Rechnungsdatenbank ein. Folge bei fehlendem
-Java dem ausgegebenen Installationshinweis und wiederhole den Setup-Aufruf.
+Toolchain-Setup prüft Archiv- und Dateihashes und benötigt Java >= 21; es erzeugt
+weder Rechnungsdatenbank noch Freigabeschlüssel. Nur für die optionale lokale
+Web-Vorschau richtet `setup --init-approval-keys --db PFAD` das Schlüsselpaar ein.
+Folge bei fehlendem Java dem Installationshinweis und wiederhole den Setup-Aufruf.
 
 ## 9. Referenzen
 
 - [Setup](references/installation_and_setup.md): Bei Konfigurationsfragen und Lizenzdetails lesen.
-- [Betrieb](references/operations.md): Für Exportpfade, Sicherung, Umzug, Wiederaufnahme und Prüfgrenzen empfangener Rechnungen lesen.
+- [Betrieb](references/operations.md): Für Exportpfade, Backup/Restore, Umzug, Integritätsfehler und Wiederaufnahme lesen.
